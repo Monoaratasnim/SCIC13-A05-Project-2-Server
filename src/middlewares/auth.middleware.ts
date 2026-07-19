@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { UserRole } from "../modules/user/user.interface";
 
 
 interface AuthRequest extends Request {
@@ -72,4 +73,25 @@ const token = authHeader.split(" ")[1];
     });
 
   }
+};
+
+
+export const requireRole = (...roles: UserRole[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authorization token is required",
+      });
+    }
+
+    if (!roles.includes(req.user.role as UserRole)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to access this resource",
+      });
+    }
+
+    next();
+  };
 };
