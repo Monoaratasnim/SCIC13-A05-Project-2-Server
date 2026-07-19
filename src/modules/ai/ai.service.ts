@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { Roadmap } from "./roadmap.model";
 
 interface CareerRoadmapInput {
   careerGoal: string;
@@ -10,10 +11,7 @@ export const generateCareerRoadmap = async (
   payload: CareerRoadmapInput
 ) => {
   const apiKey = process.env.GROQ_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("GROQ_API_KEY is missing");
-  }
+  if (!apiKey) throw new Error("GROQ_API_KEY is missing");
 
   const groq = new Groq({ apiKey });
 
@@ -43,16 +41,32 @@ Return the answer in Markdown format.
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
-      {
-        role: "system",
-        content: "You are an expert AI Career Coach.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
+      { role: "system", content: "You are an expert AI Career Coach." },
+      { role: "user", content: prompt },
     ],
   });
 
-  return completion.choices[0].message.content;
+  const content = completion.choices[0].message.content;
+  if (!content) throw new Error("Failed to generate roadmap content");
+  return content;
+};
+
+export const saveRoadmap = async (
+  userId: string,
+  content: string,
+  careerGoal: string
+) => {
+  const roadmap = await Roadmap.findOneAndUpdate(
+    { user: userId },
+    { content, careerGoal },
+    { new: true, upsert: true, runValidators: true }
+  );
+  return roadmap;
+};
+
+export const getLatestRoadmap = async (userId: string) => {
+  const roadmap = await Roadmap.findOne({ user: userId }).sort({
+    updatedAt: -1,
+  });
+  return roadmap;
 };

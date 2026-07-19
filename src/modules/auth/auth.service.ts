@@ -1,3 +1,4 @@
+import { OAuth2Client } from "google-auth-library";
 import { User } from "../user/user.model";
 import {
   comparePassword,
@@ -66,6 +67,73 @@ export const registerUser = async (
 };
 
 
+
+// GOOGLE LOGIN USER
+interface GoogleLoginPayload {
+  credential: string;
+}
+
+export const googleLoginUser = async (
+  payload: GoogleLoginPayload
+) => {
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+  const ticket = await client.verifyIdToken({
+    idToken: payload.credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload_ = ticket.getPayload();
+
+  if (!payload_ || !payload_.email) {
+    throw new Error("Invalid Google token");
+  }
+
+  const { email, name, picture } = payload_;
+
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    const randomPassword = await hashPassword(
+      Math.random().toString(36).slice(-16)
+    );
+
+    user = await User.create({
+      fullName: name || email.split("@")[0],
+      email,
+      password: randomPassword,
+      photo: picture || "",
+    });
+  }
+
+  const token = generateToken({
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  });
+
+  const { password: _, ...userWithoutPassword } =
+    user.toObject();
+
+  return {
+    user: userWithoutPassword,
+    token,
+  };
+};
+
+
+
+
+// GET PROFILE
+export const getProfile = async (userId: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
 
 
 // LOGIN USER

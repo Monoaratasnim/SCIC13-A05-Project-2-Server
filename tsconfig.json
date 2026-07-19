@@ -12,9 +12,7 @@
     "resolveJsonModule": true,
 
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-
-    "ignoreDeprecations": "6.0"
+    "skipLibCheck": true
   },
 
  "include": [

@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { Recommendation } from "./recommendation.model";
 
 interface RecommendationInput {
   skills: string[];
@@ -11,34 +12,21 @@ export const generateCareerRecommendation = async (
   payload: RecommendationInput
 ) => {
   const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("GROQ_API_KEY is missing");
 
-  if (!apiKey) {
-    throw new Error("GROQ_API_KEY is missing");
-  }
-
-  const groq = new Groq({
-    apiKey,
-  });
+  const groq = new Groq({ apiKey });
 
   const prompt = `
 You are an expert AI Career Advisor.
 
 Analyze the following user profile and provide personalized career recommendations.
 
-Education:
-${payload.education}
-
-Experience Level:
-${payload.experienceLevel}
-
-Skills:
-${payload.skills.join(", ")}
-
-Interests:
-${payload.interests.join(", ")}
+Education: ${payload.education}
+Experience Level: ${payload.experienceLevel}
+Skills: ${payload.skills.join(", ")}
+Interests: ${payload.interests.join(", ")}
 
 Generate a detailed report with the following sections:
-
 1. Best Career Paths
 2. Missing Skills
 3. Technologies to Learn
@@ -60,14 +48,41 @@ Return the response in Markdown format.
         content:
           "You are an expert AI Career Advisor helping users choose the best career path.",
       },
-      {
-        role: "user",
-        content: prompt,
-      },
+      { role: "user", content: prompt },
     ],
     temperature: 0.7,
     max_tokens: 1800,
   });
 
-  return completion.choices[0]?.message?.content;
+  const content = completion.choices[0]?.message?.content;
+  if (!content) throw new Error("Failed to generate recommendation content");
+  return content;
+};
+
+export const saveRecommendation = async (
+  userId: string,
+  content: string,
+  profileData: RecommendationInput
+) => {
+  const recommendation = await Recommendation.findOneAndUpdate(
+    { user: userId },
+    {
+      content,
+      careerProfile: {
+        skills: profileData.skills,
+        interests: profileData.interests,
+        experienceLevel: profileData.experienceLevel,
+        education: profileData.education,
+      },
+    },
+    { new: true, upsert: true, runValidators: true }
+  );
+  return recommendation;
+};
+
+export const getLatestRecommendation = async (userId: string) => {
+  const recommendation = await Recommendation.findOne({
+    user: userId,
+  }).sort({ updatedAt: -1 });
+  return recommendation;
 };

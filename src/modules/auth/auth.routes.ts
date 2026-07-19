@@ -2,7 +2,10 @@ import { Router } from "express";
 import {
   registerController,
   loginController,
+  profileController,
+  googleLoginController,
 } from "./auth.controller";
+import { authMiddleware } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -18,6 +21,21 @@ router.post(
 router.post(
   "/login",
   loginController
+);
+
+
+// Google login route
+router.post(
+  "/google",
+  googleLoginController
+);
+
+
+// Profile route (protected)
+router.get(
+  "/profile",
+  authMiddleware,
+  profileController
 );
 
 

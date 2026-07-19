@@ -36,3 +36,10 @@ export const loginValidationSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters"),
 });
+
+
+export const googleLoginValidationSchema = z.object({
+  credential: z
+    .string()
+    .min(1, "Google credential is required"),
+});
