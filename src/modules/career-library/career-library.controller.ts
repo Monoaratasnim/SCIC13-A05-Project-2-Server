@@ -71,7 +71,7 @@ export const getCareerByIdController = async (
   res: Response
 ) => {
   try {
-    const result = await getCareerById(req.params.id);
+const result = await getCareerById(req.params.id as string);
 
     res.status(200).json({
       success: true,
@@ -115,10 +115,10 @@ export const updateCareerController = async (
   res: Response
 ) => {
   try {
-    const result = await updateCareer(
-      req.params.id,
-      req.body
-    );
+   const result = await updateCareer(
+  req.params.id as string,
+  req.body
+);
 
     res.status(200).json({
       success: true,
@@ -140,7 +140,7 @@ export const deleteCareerController = async (
   res: Response
 ) => {
   try {
-    await deleteCareer(req.params.id);
+    await deleteCareer(req.params.id as string);
 
     res.status(200).json({
       success: true,
