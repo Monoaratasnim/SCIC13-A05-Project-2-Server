@@ -111,6 +111,7 @@ You are an expert AI Career Coach. Generate a professional, structured career ro
       { role: "system", content: "You are an expert AI Career Coach. You always respond with professionally structured Markdown using H2 headings, numbered steps, bullet points, horizontal separators, and blockquotes. Never output plain text walls." },
       { role: "user", content: prompt },
     ],
+    max_tokens: 4000,
   });
 
   const content = completion.choices[0].message.content;

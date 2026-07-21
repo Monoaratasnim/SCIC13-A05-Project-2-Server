@@ -9,11 +9,17 @@ export const generateCareerRoadmapController = async (
   req: Request,
   res: Response
 ) => {
+  const startTime = Date.now();
+  const userId = req.user?.id;
+
   try {
-    const userId = req.user?.id;
+    console.log(`[Roadmap] Generation started for user: ${userId}`);
 
     const result = await generateCareerRoadmap(req.body);
+    console.log(`[Roadmap] Groq completed in ${Date.now() - startTime}ms, content length: ${result.length}`);
+
     const saved = await saveRoadmap(userId!, result, req.body.careerGoal);
+    console.log(`[Roadmap] Saved to DB in ${Date.now() - startTime}ms total`);
 
     res.status(200).json({
       success: true,
@@ -21,11 +27,17 @@ export const generateCareerRoadmapController = async (
       data: saved,
     });
   } catch (error: any) {
-    console.error(error);
+    const elapsed = Date.now() - startTime;
+    console.error(`[Roadmap] FAILED after ${elapsed}ms`);
+    console.error(`[Roadmap] Error type: ${error.constructor?.name}`);
+    console.error(`[Roadmap] Error message: ${error.message}`);
+    if (error.status) console.error(`[Roadmap] Groq status: ${error.status}`);
+    if (error.headers) console.error(`[Roadmap] Groq headers: ${JSON.stringify(error.headers)}`);
+    console.error(`[Roadmap] Full error:`, error);
+
     res.status(500).json({
       success: false,
       message: "Failed to generate career roadmap",
-      error: error.message,
     });
   }
 };
@@ -52,11 +64,10 @@ export const getMyRoadmapController = async (
       data: roadmap,
     });
   } catch (error: any) {
-    console.error(error);
+    console.error(`[Roadmap] getMy failed: ${error.message}`);
     res.status(500).json({
       success: false,
       message: "Failed to retrieve roadmap",
-      error: error.message,
     });
   }
 };
