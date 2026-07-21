@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+
   try {
     await mongoose.connect(process.env.MONGODB_URI as string, {
       dbName: "nextstep-ai",
@@ -9,7 +13,7 @@ const connectDB = async () => {
     console.log("✅ MongoDB Connected");
   } catch (error) {
     console.error("❌ MongoDB Connection Failed", error);
-    process.exit(1);
+    throw error;
   }
 };
 
